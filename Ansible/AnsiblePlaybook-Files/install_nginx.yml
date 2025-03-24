@@ -1,0 +1,47 @@
+# File to automate installation and configuration of Nginx Web server on a remote machine.
+
+# Replace <..> with relevant content.
+
+- name: Set up Nginx web server
+  hosts: servers
+  become: yes
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_become_password: <remote-system-password>
+
+  tasks:
+    - name: Update package lists
+      apt:
+        update_cache: yes
+
+    - name: Install Nginx web server
+      apt:
+        name: nginx
+        state: present
+
+    - name: Ensure Nginx service is enabled and running
+      systemd:
+        name: nginx
+        state: started
+        enabled: yes
+
+    - name: Deploy custom index.html file
+      copy:
+        src: <src-path-of-index.html>    # Path of index.html on source system.
+        dest: <dest-path-of-index.html>  # Path of index.html to be created on Remote System..
+
+        owner: www-data
+        group: www-data
+        mode: '0644'
+
+    - name: Open port 80 in the firewall
+      ufw:
+        rule: allow
+        name: 'Nginx HTTP'
+
+    - name: Verify Nginx service is running and accessible
+      uri:
+        url: http://localhost
+        method: GET
+        status_code: 200

@@ -1,0 +1,29 @@
+# File to execute UPTIME command on multiple remote hosts and to store output in a central log file.
+# This will be executed for all the 'multiple' hosts defined in the inventory.ini file.
+
+# Replace <..> with relevant content.
+
+- name: Execute uptime command on multiple remote hosts and store the output
+  hosts: servers
+  gather_facts: no
+  tasks:
+    - name: Run uptime command on remote server
+      command: uptime
+      register: uptime_output
+
+    - name: Append uptime output to the central log file
+      local_action:
+        module: ansible.builtin.lineinfile
+        path: <location-of-central_logfile.txt>                 # Log file path the Source System.
+        line: "{{ inventory_hostname }} - {{ uptime_output.stdout }}"
+        create: yes
+
+- name: Schedule the task using cron (local control machine)
+  hosts: localhost
+  tasks:
+    - name: Add a cron job to run the uptime playbook every 5 minutes
+      cron:
+        name: "Run uptime playbook every 5 minutes"
+        minute: "*/5"
+        job: "ansible-playbook <path-of-uptime_playbook.yml> -i <path-of-inventory.ini>"  # Use the paths in your home directory
+        user: <remote-system-username>  # The host that will run the cron job.
